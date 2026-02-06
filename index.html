@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3b82f6">
+    <title>Irani Vertelo - Voz AI</title>
+    <style>
+        :root { --accent: #3b82f6; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --danger: #ef4444; --warning: #f59e0b; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 15px; }
+        
+        .app-container { background: var(--card); width: 100%; max-width: 400px; padding: 30px; border-radius: 35px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+        .icon-box { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), #1d4ed8); border-radius: 18px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+        .brand { font-size: 0.65rem; letter-spacing: 5px; color: var(--accent); font-weight: 900; margin-bottom: 5px; }
+        h1 { margin: 0 0 25px 0; font-size: 1.8rem; color: #fff; font-weight: 800; }
+        
+        textarea { width: 100%; height: 140px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 20px; color: #fff; padding: 18px; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; outline: none; transition: 0.3s; resize: none; border-left: 4px solid var(--accent); }
+        
+        .control-group { background: rgba(255,255,255,0.02); padding: 15px; border-radius: 18px; margin-bottom: 20px; }
+        .row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; font-weight: 800; }
+        input[type="range"] { width: 65%; accent-color: var(--accent); cursor: pointer; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .play-btn { grid-column: span 2; background: var(--accent); color: white; }
+        .pause-btn { background: var(--warning); color: white; }
+        .stop-btn { background: var(--danger); color: white; }
+        
+        button { padding: 16px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:active { transform: scale(0.95); }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="icon-box">🎙️</div>
+    <div class="brand">SISTEMA DE VOZ</div>
+    <h1>Irani Vertelo</h1>
+    
+    <textarea id="txt" placeholder="Cole seu texto aqui...">Olá! Use os botões abaixo para controlar a minha fala em tempo real.</textarea>
+    
+    <div class="control-group">
+        <div class="row">
+            <span>Velocidade</span>
+            <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
+            <span id="rateVal" style="color:var(--accent)">1.0x</span>
+        </div>
+    </div>
+
+    <div class="btn-grid">
+        <button class="play-btn" onclick="falar()">▶ REPRODUZIR</button>
+        <button class="pause-btn" onclick="pausar()">⏸ PAUSAR / VOLTAR</button>
+        <button class="stop-btn" onclick="parar()">⏹ PARAR TUDO</button>
+    </div>
+</div>
+
+<script>
+    const synth = window.speechSynthesis;
+    const txt = document.getElementById('txt');
+    const rateInput = document.getElementById('rate');
+    const rateVal = document.getElementById('rateVal');
+
+    rateInput.oninput = () => rateVal.innerText = rateInput.value + 'x';
+
+    function falar() {
+        if (synth.paused) {
+            synth.resume();
+        } else {
+            synth.cancel();
+            const uttr = new SpeechSynthesisUtterance(txt.value);
+            uttr.lang = 'pt-BR';
+            uttr.rate = parseFloat(rateInput.value);
+            
+            const voices = synth.getVoices();
+            const vozBR = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Google') || v.name.includes('Antonio')));
+            if (vozBR) uttr.voice = vozBR;
+            
+            synth.speak(uttr);
+        }
+    }
+
+    function pausar() {
+        if (synth.speaking) {
+            if (synth.paused) {
+                synth.resume();
+            } else {
+                synth.pause();
+            }
+        }
+    }
+
+    function parar() {
+        synth.cancel();
+    }
+
+    // PWA Offline
+    if ('serviceWorker' in navigator) {
+        const sw = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
+        navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], {type: 'text/javascript'})));
+    }
+
+    // Garante que o motor de voz carregue no Chrome
+    window.speechSynthesis.onvoiceschanged = () => synth.getVoices();
+</script>
+</body>
+</html>
